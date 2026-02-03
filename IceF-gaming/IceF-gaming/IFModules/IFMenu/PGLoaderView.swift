@@ -1,3 +1,10 @@
+//
+//  PGLoaderView.swift
+//  IceF-gaming
+//
+//
+
+
 import SwiftUI
 
 struct PGLoaderView: View {
@@ -7,7 +14,7 @@ struct PGLoaderView: View {
        var body: some View {
            ZStack {
                ZStack {
-                   Image(.loaderViewLogoZZ)
+                   Image(.loaderViewLogoIF)
                        .resizable()
                        .ignoresSafeArea()
                        .scaledToFill()
@@ -18,7 +25,7 @@ struct PGLoaderView: View {
                
                VStack(spacing: 0) {
                    
-                   Image(.loaderViewLogoZZ)
+                   Image(.loaderViewLogoIF)
                        .resizable()
                        .scaledToFit()
                        .frame(height: 200)

@@ -19,12 +19,6 @@ struct IFAchivementsView: View {
             VStack {
                 
                 ZStack {
-                    HStack {
-                        Image(.achievementsTextIF)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 80:48)
-                    }
                     
                     HStack(alignment: .center) {
                         Button {
@@ -44,34 +38,29 @@ struct IFAchivementsView: View {
                     }.padding(.horizontal).padding([.top])
                 }
                 
+                HStack {
+                    Image(.achievementsTextIF)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 80:90)
+                }
+                
                 VStack {
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(viewModel.achievements, id: \.self) { item in
-                                Image(item.isAchieved ? item.image : "\(item.image)Off")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: 210)
-                                    .overlay(alignment: .bottom, content: {
-                                        if item.isAchieved {
-                                            Image(.getBtnPG)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(height: 70)
-                                        }
-                                    })
-                                    .onTapGesture {
-                                        if item.isAchieved {
-                                            user.updateUserMoney(for: 10)
-                                        }
-                                        viewModel.achieveToggle(item)
-                                    }
-                                
-                            }
-                        }
-                    }
                     
+                    ForEach(viewModel.achievements, id: \.self) { item in
+                        Image(item.isAchieved ? item.image : "\(item.image)Off")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 90)
+                            .onTapGesture {
+                                if item.isAchieved {
+                                    user.updateUserMoney(for: 10)
+                                }
+                                viewModel.achieveToggle(item)
+                            }
+                        
+                    }
                 }
                 .frame(maxHeight: .infinity)
                 

@@ -2,7 +2,6 @@
 //  GameView.swift
 //  IceF-gaming
 //
-//  Created by Dias Atudinov on 30.01.2026.
 //
 
 
@@ -10,77 +9,162 @@ import SwiftUI
 import SpriteKit
 
 struct GameView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var viewModel: CPShopViewModel
     @State private var gameOver = false
     @State private var score: Int = 0
-    @State private var sceneID = UUID() // чтобы пересоздавать сцену при рестарте
-
-    var body: some View {
-        ZStack {
-            SpriteView(scene: makeScene(),
-                       options: [.ignoresSiblingOrder],
-                       debugOptions: [])
-                .ignoresSafeArea()
-
-            VStack {
-                HStack {
-                    Text("Score: \(score)")
-                        .font(.system(size: 18, weight: .semibold))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(.black.opacity(0.35))
-                        .clipShape(Capsule())
-                    Spacer()
-                }
-                .padding(.top, 16)
-                .padding(.horizontal, 16)
-
-                Spacer()
-            }
-
-            if gameOver {
-                Color.black.opacity(0.55).ignoresSafeArea()
-
-                VStack(spacing: 12) {
-                    Text("Game Over")
-                        .font(.system(size: 34, weight: .bold))
-                    Text("Score: \(score)")
-                        .font(.system(size: 20, weight: .semibold))
-                        .opacity(0.9)
-
-                    Button {
-                        gameOver = false
-                        score = 0
-                        sceneID = UUID()
-                    } label: {
-                        Text("Restart")
-                            .font(.system(size: 18, weight: .bold))
-                            .padding(.horizontal, 26)
-                            .padding(.vertical, 12)
-                            .background(.white)
-                            .foregroundColor(.black)
-                            .clipShape(Capsule())
-                    }
-                    .padding(.top, 8)
-                }
-                .foregroundColor(.white)
-            }
-        }
-    }
-
-    private func makeScene() -> SKScene {
+    @State private var scene: GameScene = {
         let s = GameScene()
         s.scaleMode = .resizeFill
-
-        s.onScore = { newScore in
-            score = newScore
-        }
-        s.onGameOver = { finalScore in
-            score = finalScore
-            gameOver = true
-        }
-
-        // Используем sceneID, чтобы SpriteView пересоздал сцену при рестарте
-        _ = sceneID
+        s.backgroundColor = .clear
         return s
+    }()
+    @State private var sceneID = UUID() // чтобы пересоздавать сцену при рестарте
+    
+    @AppStorage("maxScore") var maxScore: Int = 0
+    
+    var body: some View {
+        ZStack {
+            
+            SpriteViewContainer(scene: scene)
+                .id(sceneID)
+                .ignoresSafeArea()
+            
+            VStack {
+                HStack {
+                    Button {
+                        presentationMode.wrappedValue.dismiss()
+                        
+                    } label: {
+                        Image(.backIconIF)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:50)
+                    }
+                    
+                    Button {
+                        restart()
+                    } label: {
+                        Image(.restartIconIF)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:50)
+                    }
+                    
+                    Spacer()
+                    
+                    ZZCoinBg()
+                    
+                }.padding()
+                
+                
+                
+                
+                
+                Text("\(score)")
+                    .font(.system(size: 54, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                
+            }.padding(.vertical, 32)
+            
+            
+            
+            
+            if gameOver {
+                Color.black.opacity(0.55).ignoresSafeArea()
+                Image(.gameOverBgIF)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 600)
+                    .padding(.trailing, 40)
+                    .overlay {
+                        VStack {
+                            
+                            VStack(spacing: 0) {
+                                Text("Score: \(score)")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(maxHeight: .infinity, alignment: .bottom)
+                                
+                                Text("Best Score: \(maxScore)")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                            
+                            Button {
+                                restart()
+                            } label: {
+                                Image(.restartBtnIF)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:70)
+                            }
+                            
+                            Button {
+                                presentationMode.wrappedValue.dismiss()
+                            } label: {
+                                Image(.menuBtnIF)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:70)
+                            }
+                        }.padding(.bottom, 70)
+                    }
+            }
+        }
+        .background(
+            ZStack {
+                if let currentBg = viewModel.currentBgItem {
+                    Image(currentBg.image)
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
+                    
+                }
+            }
+        )
+        .onAppear { wireCallbacks() }
+            .onChange(of: sceneID) { _ in
+                wireCallbacks()
+            }
     }
+    
+    private func bestScoreDetect() {
+        if score > maxScore {
+            maxScore = score
+        }
+    }
+    
+    private func wireCallbacks() {
+        scene.onScore = { newScore in
+            DispatchQueue.main.async {
+                score = newScore
+            }
+        }
+        scene.onGameOver = { finalScore in
+            DispatchQueue.main.async {
+                score = finalScore
+                bestScoreDetect()
+                ZZUser.shared.updateUserMoney(for: 10)
+                gameOver = true
+            }
+        }
+    }
+    
+    private func restart() {
+        gameOver = false
+        score = 0
+        
+        let s = GameScene()
+        s.scaleMode = .resizeFill
+        s.backgroundColor = .clear
+        scene = s
+        
+        sceneID = UUID()
+    }
+}
+
+#Preview {
+    GameView(viewModel: CPShopViewModel())
 }

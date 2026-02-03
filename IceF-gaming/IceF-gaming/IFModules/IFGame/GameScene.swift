@@ -1,3 +1,10 @@
+//
+//  GameScene.swift
+//  IceF-gaming
+//
+//
+
+
 import SpriteKit
 
 final class GameScene: SKScene, SKPhysicsContactDelegate {
@@ -5,7 +12,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     // MARK: - Callbacks to SwiftUI
     var onScore: ((Int) -> Void)?
     var onGameOver: ((Int) -> Void)?
-
+    let shopVM = CPShopViewModel()
     // MARK: - Sizes from your spec (points)
     private let wallWidth: CGFloat = 65
     private let ballSize: CGFloat = 55
@@ -13,27 +20,30 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var gapWidth: CGFloat { ballSize * 2 } // "ширина в два шара"
 
     // MARK: - Motion tuning
-    private var directionX: CGFloat = 1 // 1 = right, -1 = left
-    private var horizontalSpeed: CGFloat = 260
-    private var verticalSpeed: CGFloat = 260
-    private var speedGrowth: CGFloat = 0.03 // рост скорости по мере набора высоты
+    private var directionX: CGFloat = 1        // 1 = вправо, -1 = влево
+    private var baseSpeed: CGFloat = 520     // было 320
+    private var angleDeg: CGFloat = 24       // было 12
+    private var speedGrowth: CGFloat = 0  // было 0.03    // рост скорости
 
     // MARK: - World
     private let world = SKNode()
     private let cameraNode = SKCameraNode()
 
     // MARK: - Player
-    private var ball = SKShapeNode()
+    private var ball = SKSpriteNode()
     private var startY: CGFloat = 0
 
     // MARK: - Obstacles
     private var nextObstacleY: CGFloat = 0
-    private let obstacleSpacing: CGFloat = 240
+    private let obstacleSpacing: CGFloat = 340
 
     // MARK: - Score
     private var bestY: CGFloat = 0
     private var isDead = false
 
+    private var leftWallVis: SKSpriteNode!
+    private var rightWallVis: SKSpriteNode!
+    
     // MARK: - Physics categories
     private struct Cat {
         static let ball: UInt32      = 1 << 0
@@ -43,7 +53,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
-        backgroundColor = .black
+        backgroundColor = .clear
         removeAllChildren()
         removeAllActions()
         isDead = false
@@ -94,25 +104,30 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         world.addChild(rightWall)
 
         // Визуальные стены (просто заливка по бокам)
-        let leftVis = SKSpriteNode(color: .darkGray, size: CGSize(width: wallWidth, height: size.height * 3))
-        leftVis.anchorPoint = CGPoint(x: 0, y: 0.5)
-        leftVis.position = CGPoint(x: 0, y: size.height / 2)
-        leftVis.zPosition = -1
-        world.addChild(leftVis)
+        let visHeight = size.height * 1.4
 
-        let rightVis = SKSpriteNode(color: .darkGray, size: CGSize(width: wallWidth, height: size.height * 3))
-        rightVis.anchorPoint = CGPoint(x: 1, y: 0.5)
-        rightVis.position = CGPoint(x: size.width, y: size.height / 2)
-        rightVis.zPosition = -1
-        world.addChild(rightVis)
+        leftWallVis = SKSpriteNode(color: .wall, size: CGSize(width: wallWidth, height: visHeight))
+        leftWallVis.anchorPoint = CGPoint(x: 0, y: 0.5)
+        leftWallVis.position = CGPoint(x: -size.width / 2, y: 0)   // левый край экрана в координатах камеры
+        leftWallVis.zPosition = -1
+        cameraNode.addChild(leftWallVis)
+
+        rightWallVis = SKSpriteNode(color: .wall, size: CGSize(width: wallWidth, height: visHeight))
+        rightWallVis.anchorPoint = CGPoint(x: 1, y: 0.5)
+        rightWallVis.position = CGPoint(x: size.width / 2, y: 0)   // правый край экрана
+        rightWallVis.zPosition = -1
+        cameraNode.addChild(rightWallVis)
     }
 
     private func setupBall() {
-        ball = SKShapeNode(circleOfRadius: ballSize / 2)
-        ball.fillColor = .white
-        ball.strokeColor = .clear
+        guard let currentSkinItem = shopVM.currentSkinItem else { return }
+        ball = SKSpriteNode(imageNamed: currentSkinItem.image)
+        ball.size = CGSize(width: ballSize, height: ballSize)   // 55x55
         ball.position = CGPoint(x: size.width / 2, y: size.height * 0.25)
         ball.zPosition = 10
+
+        // Если у картинки есть прозрачные края — можно подогнать:
+        // ball.anchorPoint = CGPoint(x: 0.5, y: 0.5)
 
         let body = SKPhysicsBody(circleOfRadius: ballSize / 2)
         body.affectedByGravity = false
@@ -150,7 +165,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard !isDead, let body = ball.physicsBody else { return }
 
         // Принудительно держим диагональную скорость (dx + dy)
-        body.velocity = CGVector(dx: directionX * horizontalSpeed, dy: verticalSpeed)
+        let rad = angleDeg * .pi / 180
+        let dx = sin(rad) * baseSpeed * directionX   // X-компонента (слегка)
+        let dy = cos(rad) * baseSpeed                // Y-компонента (в основном вверх)
+
+        body.velocity = CGVector(dx: dx, dy: dy)
 
         // Камера следует за шаром по Y, по X фиксирована по центру
         cameraNode.position = CGPoint(x: size.width / 2, y: ball.position.y + size.height * 0.2)
@@ -162,8 +181,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             onScore?(sc)
 
             // постепенное усложнение
-            verticalSpeed = 260 + (bestY - startY) * speedGrowth
-            horizontalSpeed = max(220, min(420, 260 + (bestY - startY) * 0.01))
+            baseSpeed = 520 + (bestY - startY) * speedGrowth
+            baseSpeed = min(baseSpeed, 900)// потолок по желанию
         }
 
         // Догенерить препятствия впереди камеры

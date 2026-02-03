@@ -1,3 +1,10 @@
+//
+//  PGMenuView.swift
+//  IceF-gaming
+//
+//
+
+
 import SwiftUI
 
 struct PGMenuView: View {
@@ -13,72 +20,73 @@ struct PGMenuView: View {
         
         ZStack {
             
-            HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 10) {
-                    ZZCoinBg()
-                        .frame(maxHeight: .infinity, alignment: .top)
-                    
-                    Button {
-                        showShop = true
-                    } label: {
-                        Image("shopIconZZ")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:77)
-                    }
-                }
-                
-                VStack(spacing: 10) {
-                    
-                    
-                }
-                .frame(maxWidth: .infinity)
-                
-                VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
                     Button {
                         showSettings = true
                     } label: {
-                        Image("settingsIconZZ")
+                        Image("settingsIconIF")
                             .resizable()
                             .scaledToFit()
-                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:82)
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:50)
                     }
-                    .frame(maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    ZZCoinBg()
+                }
+                
+                VStack(alignment: .center) {
+                    Image("loaderViewLogoIF")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 140:163)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    
+                    Button {
+                        showGame = true
+                    } label: {
+                        Image("playIconIF")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:90)
+                    }
+                    
+                    Button {
+                        showDailyReward = true
+                    } label: {
+                        Image("dailyIconIF")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:90)
+                    }
                     
                     Button {
                         showAchievement = true
                     } label: {
-                        Image("achivementsIconZZ")
+                        Image("achievementsIconIF")
                             .resizable()
                             .scaledToFit()
-                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:87)
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:90)
                     }
-                }
+                    
+                    Button {
+                        showShop = true
+                    } label: {
+                        Image("shopIconIF")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:90)
+                    }
+                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 
-            }
-            .padding(5)
+            }.padding()
+                
             
-            VStack(spacing: 10) {
-                Image("menuLogoZZ")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 140:170)
-                
-                Button {
-                    showGame = true
-                } label: {
-                    Image("playIconZZ")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: ZZDeviceManager.shared.deviceType == .pad ? 100:150)
-                }
-                
-            }
             
         }.frame(maxWidth: .infinity)
             .background(
                 ZStack {
-                    Image(.appBgZZ)
+                    Image(.appBgIF)
                         .resizable()
                         .edgesIgnoringSafeArea(.all)
                         .scaledToFill()
@@ -91,10 +99,13 @@ struct PGMenuView: View {
                 PGShopView(viewModel: shopVM)
             }
             .fullScreenCover(isPresented: $showSettings) {
-                PGSettingsView()
+                IFSettingsView()
             }
             .fullScreenCover(isPresented: $showAchievement) {
-                PGAchivementsView()
+                IFAchivementsView()
+            }
+            .fullScreenCover(isPresented: $showDailyReward) {
+                IFDailyView()
             }
         
     }
