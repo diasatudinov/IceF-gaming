@@ -2,7 +2,6 @@
 //  ContentView.swift
 //  IceF-gaming
 //
-//  Created by Dias Atudinov on 30.01.2026.
 //
 
 import SwiftUI

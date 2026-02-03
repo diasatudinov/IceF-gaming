@@ -1,3 +1,10 @@
+//
+//  ZZDeviceManager.swift
+//  IceF-gaming
+//
+//
+
+
 import UIKit
 
 class ZZDeviceManager {

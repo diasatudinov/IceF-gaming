@@ -1,3 +1,10 @@
+//
+//  ZZUser.swift
+//  IceF-gaming
+//
+//
+
+
 import SwiftUI
 
 class ZZUser: ObservableObject {
